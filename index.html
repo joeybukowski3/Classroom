@@ -315,22 +315,19 @@
         </label>
         <hr style="width:90%; border:1px solid var(--tray-bg); margin: 10px auto;">
         <label class="control-label">
-            <input type="checkbox" class="cat-checkbox" data-cat="vowel" onchange="updateTray()" checked> Vowels
-        </label>
-        <label class="control-label">
-            <input type="checkbox" class="cat-checkbox" data-cat="consonant" onchange="updateTray()" checked> Consonants
-        </label>
-        <label class="control-label">
-            <input type="checkbox" class="cat-checkbox" data-cat="digraph" onchange="updateTray()" checked> Digraphs
-        </label>
-        <label class="control-label">
-            <input type="checkbox" class="cat-checkbox" data-cat="vowel-team" onchange="updateTray()" checked> Vowel Teams
+            <input type="checkbox" class="cat-checkbox" data-cat="custom1" onchange="updateTray()" checked> Custom #1
         </label>
         <label class="control-label">
             <input type="checkbox" class="cat-checkbox" data-cat="r-controlled" onchange="updateTray()" checked> R-Controlled
         </label>
         <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="vowel-team" onchange="updateTray()" checked> Vowel Teams
+        </label>
+        <label class="control-label">
             <input type="checkbox" class="cat-checkbox" data-cat="other" onchange="updateTray()" checked> Other Sounds
+        </label>
+        <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="alphabet" onchange="updateTray()" checked> Consonants/Vowels
         </label>
     </div>
 
@@ -383,12 +380,11 @@
 
     <script>
         const sounds = {
-            vowel: ['a', 'e', 'i', 'o', 'u'],
-            consonant: ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z'],
-            digraph: ['ch', 'sh', 'th', 'wh', 'ph', 'ck', 'kn', 'wr', 'gh', 'mb', 'gn'],
+            custom1: ['ch', 'sh', 'th', 'wh', 'ph', 'ck', 'kn', 'wr', 'gh', 'mb', 'gn'],
             'r-controlled': ['ar', 'er', 'ir', 'or', 'ur'],
             'vowel-team': ['ai', 'ay', 'au', 'aw', 'ee', 'ew', 'ea', 'ie', 'igh', 'ow', 'oa', 'oe', 'ou', 'oo', 'oi', 'ue', 'ui', 'oy', 'eigh', 'ey', 'ei'],
-            other: ['dge', 'nk', 'ng', 'tch', 'qu', 'ff', 'll', 'ss', 'zz', 'ed', 'ing']
+            other: ['dge', 'nk', 'ng', 'tch', 'qu', 'ff', 'll', 'ss', 'zz', 'ed', 'ing'],
+            alphabet: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
         };
 
         const phoneticMap = {
@@ -408,15 +404,27 @@
             const tray = document.getElementById('tray-area');
             tray.innerHTML = '';
             
-            const checkboxes = document.querySelectorAll('.cat-checkbox:not(#toggle-all)');
-            checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    const cat = cb.dataset.cat;
-                    sounds[cat].forEach(sound => createTile(tray, sound, cat));
+            // Render in exact requested order
+            const categoryOrder = ['custom1', 'r-controlled', 'vowel-team', 'other', 'alphabet'];
+            
+            categoryOrder.forEach(cat => {
+                const checkbox = document.querySelector(`.cat-checkbox[data-cat="${cat}"]`);
+                if (checkbox && checkbox.checked) {
+                    sounds[cat].forEach(sound => {
+                        // For alphabet category, we need to distinguish vowel/consonant for styling
+                        let type = cat;
+                        if (cat === 'alphabet') {
+                            type = ['a', 'e', 'i', 'o', 'u'].includes(sound) ? 'vowel' : 'consonant';
+                        } else if (cat === 'custom1') {
+                            type = 'digraph'; // Keep green color styling
+                        }
+                        createTile(tray, sound, type);
+                    });
                 }
             });
             
             // Sync Include All checkbox
+            const checkboxes = document.querySelectorAll('.cat-checkbox:not(#toggle-all)');
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
             document.getElementById('toggle-all').checked = allChecked;
         }
