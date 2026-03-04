@@ -314,19 +314,19 @@
             <input type="checkbox" id="toggle-all" onchange="toggleAllCategories(this.checked)" checked class="cat-checkbox"> Include All
         </label>
         <hr style="width:90%; border:1px solid var(--tray-bg); margin: 10px auto;">
-        <label class="control-label">
-            <input type="checkbox" class="cat-checkbox" data-cat="custom1" onchange="updateTray()" checked> Custom #1
+        <label class="control-label" style="background-color: var(--digraph-color);">
+            <input type="checkbox" class="cat-checkbox" data-cat="digraph" onchange="updateTray()" checked> Digraphs
         </label>
-        <label class="control-label">
+        <label class="control-label" style="background-color: var(--r-controlled-color);">
             <input type="checkbox" class="cat-checkbox" data-cat="r-controlled" onchange="updateTray()" checked> R-Controlled
         </label>
-        <label class="control-label">
+        <label class="control-label" style="background-color: var(--vowel-team-color);">
             <input type="checkbox" class="cat-checkbox" data-cat="vowel-team" onchange="updateTray()" checked> Vowel Teams
         </label>
-        <label class="control-label">
+        <label class="control-label" style="background-color: var(--other-color); border: 2px solid #cbd5e0;">
             <input type="checkbox" class="cat-checkbox" data-cat="other" onchange="updateTray()" checked> Other Sounds
         </label>
-        <label class="control-label">
+        <label class="control-label" style="background: linear-gradient(90deg, var(--consonant-color) 0%, var(--vowel-color) 100%); color: #2d3748;">
             <input type="checkbox" class="cat-checkbox" data-cat="alphabet" onchange="updateTray()" checked> Consonants/Vowels
         </label>
     </div>
@@ -380,7 +380,7 @@
 
     <script>
         const sounds = {
-            custom1: ['ch', 'sh', 'th', 'wh', 'ph', 'ck', 'kn', 'wr', 'gh', 'mb', 'gn'],
+            digraph: ['ch', 'sh', 'th', 'wh', 'ph', 'ck', 'kn', 'wr', 'gh', 'mb', 'gn'],
             'r-controlled': ['ar', 'er', 'ir', 'or', 'ur'],
             'vowel-team': ['ai', 'ay', 'au', 'aw', 'ee', 'ew', 'ea', 'ie', 'igh', 'ow', 'oa', 'oe', 'ou', 'oo', 'oi', 'ue', 'ui', 'oy', 'eigh', 'ey', 'ei'],
             other: ['dge', 'nk', 'ng', 'tch', 'qu', 'ff', 'll', 'ss', 'zz', 'ed', 'ing'],
@@ -411,7 +411,7 @@
             tray.innerHTML = '';
             
             // Render in exact requested order
-            const categoryOrder = ['custom1', 'r-controlled', 'vowel-team', 'other', 'alphabet'];
+            const categoryOrder = ['digraph', 'r-controlled', 'vowel-team', 'other', 'alphabet'];
             
             categoryOrder.forEach(cat => {
                 const checkbox = document.querySelector(`.cat-checkbox[data-cat="${cat}"]`);
@@ -420,8 +420,6 @@
                         let type = cat;
                         if (cat === 'alphabet') {
                             type = ['a', 'e', 'i', 'o', 'u'].includes(sound) ? 'vowel' : 'consonant';
-                        } else if (cat === 'custom1') {
-                            type = 'digraph'; 
                         }
                         createTile(tray, sound, type);
                     });
