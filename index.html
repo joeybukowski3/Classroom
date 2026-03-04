@@ -282,18 +282,56 @@
         .word-tile {
             animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
+        /* Sidebar Control Styles */
+        .control-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background 0.2s;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .control-label:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .cat-checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #4a5568;
+        }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
-        <button class="category-btn" style="background-color: #e2e8f0;" onclick="renderTray('all')">All Sounds</button>
-        <button class="category-btn cat-vowels" onclick="renderTray('vowel')">Vowels</button>
-        <button class="category-btn cat-consonants" onclick="renderTray('consonant')">Consonants</button>
-        <button class="category-btn cat-digraphs" onclick="renderTray('digraph')">Digraphs</button>
-        <button class="category-btn cat-vowel-teams" onclick="renderTray('vowel-team')">Vowel Teams</button>
-        <button class="category-btn cat-r-controlled" onclick="renderTray('r-controlled')">R-Controlled</button>
-        <button class="category-btn cat-other" onclick="renderTray('other')">Other Sounds</button>
+        <h3 style="margin-top:0; padding-left:10px;">Category Controls</h3>
+        <label class="control-label">
+            <input type="checkbox" id="toggle-all" onchange="toggleAllCategories(this.checked)" checked class="cat-checkbox"> Include All
+        </label>
+        <hr style="width:90%; border:1px solid var(--tray-bg); margin: 10px auto;">
+        <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="vowel" onchange="updateTray()" checked> Vowels
+        </label>
+        <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="consonant" onchange="updateTray()" checked> Consonants
+        </label>
+        <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="digraph" onchange="updateTray()" checked> Digraphs
+        </label>
+        <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="vowel-team" onchange="updateTray()" checked> Vowel Teams
+        </label>
+        <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="r-controlled" onchange="updateTray()" checked> R-Controlled
+        </label>
+        <label class="control-label">
+            <input type="checkbox" class="cat-checkbox" data-cat="other" onchange="updateTray()" checked> Other Sounds
+        </label>
     </div>
 
     <div id="main-container">
@@ -357,7 +395,7 @@
             'ch': 'chhh', 'sh': 'shhh', 'th': 'thhh', 'wh': 'wooo', 'ph': 'fff', 'ck': 'k', 'kn': 'n', 'wr': 'r', 'gh': 'g', 'mb': 'm', 'gn': 'n',
             'ar': 'ahr', 'er': 'er', 'ir': 'er', 'or': 'or', 'ur': 'er',
             'ai': 'ay', 'ay': 'ay', 'au': 'aw', 'aw': 'aw', 'ee': 'ee', 'ew': 'oo', 'ea': 'ee', 'ie': 'eye', 'igh': 'eye', 'ow': 'ow', 'oa': 'oh', 'oe': 'oh', 'ou': 'ow', 'oo': 'oo', 'oi': 'oy', 'ue': 'oo', 'ui': 'oo', 'oy': 'oy', 'eigh': 'ay', 'ey': 'ee', 'ei': 'ay',
-            'dge': 'j', 'nk': 'ngk', 'ng': 'ng', 'tch': 'ch', 'qu': 'kw', 'ff': 'f', 'll': 'l', 'ss': 's', 'zz': 'z', 'ed': 'ed', 'ing': 'ing'
+            'dge': 'edge', 'nk': 'ngk', 'ng': 'ng', 'tch': 'ch', 'qu': 'kwa', 'ff': 'f', 'll': 'l', 'ss': 's', 'zz': 'z', 'ed': 'ed', 'ing': 'ing'
         };
 
         const challengeWords = ['cat', 'ship', 'shop', 'fish', 'chat', 'path', 'duck', 'king', 'sing', 'book', 'moon', 'star', 'park', 'bird', 'coat', 'rain'];
@@ -366,17 +404,28 @@
         let history = [];
         let showDots = true;
 
-        function renderTray(category) {
+        function updateTray() {
             const tray = document.getElementById('tray-area');
             tray.innerHTML = '';
             
-            if (category === 'all') {
-                Object.keys(sounds).forEach(cat => {
+            const checkboxes = document.querySelectorAll('.cat-checkbox:not(#toggle-all)');
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    const cat = cb.dataset.cat;
                     sounds[cat].forEach(sound => createTile(tray, sound, cat));
-                });
-            } else {
-                sounds[category].forEach(sound => createTile(tray, sound, category));
-            }
+                }
+            });
+            
+            // Sync Include All checkbox
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            document.getElementById('toggle-all').checked = allChecked;
+        }
+
+        function toggleAllCategories(checked) {
+            document.querySelectorAll('.cat-checkbox').forEach(cb => {
+                cb.checked = checked;
+            });
+            updateTray();
         }
 
         function createTile(container, sound, type) {
@@ -392,7 +441,7 @@
             const maxLength = document.getElementById('word-length').value;
             if (maxLength !== 'custom' && currentWord.length >= parseInt(maxLength)) return;
 
-            speak(sound, 1.0);
+            speakPhoneme(sound, 1.0);
             currentWord.push({ sound, type });
             updateWordSection();
         }
@@ -443,7 +492,7 @@
                 const li = document.createElement('li');
                 li.className = 'history-item';
                 li.textContent = word;
-                li.onclick = () => speak(word, 1.0);
+                li.onclick = () => speakPhoneme(word, 1.0);
                 list.prepend(li);
             }
         }
@@ -473,65 +522,61 @@
 
         function challengeMe() {
             const word = challengeWords[Math.floor(Math.random() * challengeWords.length)];
-            speak("Can you build the word " + word + "?", 0.9);
+            speakPhoneme("Can you build the word " + word + "?", 0.9);
         }
 
         function saveSettings() {
             localStorage.setItem('wordLimit', document.getElementById('word-length').value);
         }
-let preferredVoice = null;
 
-function initVoices() {
-    const voices = window.speechSynthesis.getVoices();
-    // Prioritize Samantha, then Google US English, then any female voice
-    preferredVoice = voices.find(v => v.name.includes('Samantha')) ||
-                     voices.find(v => v.name.includes('Google US English')) ||
-                     voices.find(v => v.name.toLowerCase().includes('female')) ||
-                     voices[0];
-}
+        let preferredVoice = null;
 
-// Some browsers load voices asynchronously
-if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = initVoices;
-}
-initVoices();
+        function initVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            preferredVoice = voices.find(v => v.name.includes('Samantha')) ||
+                             voices.find(v => v.name.includes('Google US English')) ||
+                             voices.find(v => v.name.toLowerCase().includes('female')) ||
+                             voices[0];
+        }
 
-function getPhoneticSound(text) {
-    return phoneticMap[text.toLowerCase()] || text;
-}
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = initVoices;
+        }
+        initVoices();
 
-// Web Speech API
-function speak(text, rateOverride) {
-    const soundToSpeak = getPhoneticSound(text);
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(soundToSpeak);
+        function getPhoneticSound(text) {
+            return phoneticMap[text.toLowerCase()] || text;
+        }
 
-    if (preferredVoice) utterance.voice = preferredVoice;
+        function speakPhoneme(tileText, rateOverride) {
+            const soundToSpeak = getPhoneticSound(tileText);
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(soundToSpeak);
 
-    // Requirements: calm and soothing (pitch 0.9, default rate 0.8)
-    utterance.pitch = 0.9;
-    utterance.rate = rateOverride || 0.8;
+            if (preferredVoice) utterance.voice = preferredVoice;
 
-    window.speechSynthesis.speak(utterance);
-}
-async function soundOut() {
-    for (const item of currentWord) {
-        // Slower rate for sounding out, but maintaining calm pitch
-        speak(item.sound, 0.4); 
-        await new Promise(r => setTimeout(r, 1000));
-    }
-}
+            utterance.pitch = 0.9;
+            utterance.rate = rateOverride || 0.8;
 
-function readWord() {
-    const fullWord = currentWord.map(i => i.sound).join('');
-    speak(fullWord, 0.8);
-}
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function soundOut() {
+            for (const item of currentWord) {
+                speakPhoneme(item.sound, 0.4); 
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+
+        function readWord() {
+            const fullWord = currentWord.map(i => i.sound).join('');
+            speakPhoneme(fullWord, 0.8);
+        }
 
         function toggleHistory() {
             document.getElementById('history-drawer').classList.toggle('collapsed');
         }
 
-        // Initialize
         window.onload = () => {
             const savedLimit = localStorage.getItem('wordLimit');
             if (savedLimit) document.getElementById('word-length').value = savedLimit;
@@ -539,7 +584,7 @@ function readWord() {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
             
-            renderTray('vowel');
+            updateTray();
         };
     </script>
 </body>
