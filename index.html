@@ -388,10 +388,16 @@
         };
 
         const phoneticMap = {
-            'ch': 'chhh', 'sh': 'shhh', 'th': 'thhh', 'wh': 'wooo', 'ph': 'fff', 'ck': 'k', 'kn': 'n', 'wr': 'r', 'gh': 'g', 'mb': 'm', 'gn': 'n',
-            'ar': 'ahr', 'er': 'er', 'ir': 'er', 'or': 'or', 'ur': 'er',
+            'ch': 'ch', 'sh': 'sh', 'th': 'th', 'wh': 'wh', 'ph': 'f', 'ck': 'k', 'kn': 'n', 'wr': 'r', 'gh': 'g', 'mb': 'm', 'gn': 'n',
+            'ar': 'ar', 'er': 'er', 'ir': 'er', 'or': 'or', 'ur': 'er',
             'ai': 'ay', 'ay': 'ay', 'au': 'aw', 'aw': 'aw', 'ee': 'ee', 'ew': 'oo', 'ea': 'ee', 'ie': 'eye', 'igh': 'eye', 'ow': 'ow', 'oa': 'oh', 'oe': 'oh', 'ou': 'ow', 'oo': 'oo', 'oi': 'oy', 'ue': 'oo', 'ui': 'oo', 'oy': 'oy', 'eigh': 'ay', 'ey': 'ee', 'ei': 'ay',
             'dge': 'edge', 'nk': 'ngk', 'ng': 'ng', 'tch': 'ch', 'qu': 'kwa', 'ff': 'f', 'll': 'l', 'ss': 's', 'zz': 'z', 'ed': 'ed', 'ing': 'ing'
+        };
+
+        const audioMap = {
+            'ch': 'sounds/ch.mp3',
+            'sh': 'sounds/sh.mp3',
+            'th': 'sounds/th.mp3'
         };
 
         const challengeWords = ['cat', 'ship', 'shop', 'fish', 'chat', 'path', 'duck', 'king', 'sing', 'book', 'moon', 'star', 'park', 'bird', 'coat', 'rain'];
@@ -411,19 +417,17 @@
                 const checkbox = document.querySelector(`.cat-checkbox[data-cat="${cat}"]`);
                 if (checkbox && checkbox.checked) {
                     sounds[cat].forEach(sound => {
-                        // For alphabet category, we need to distinguish vowel/consonant for styling
                         let type = cat;
                         if (cat === 'alphabet') {
                             type = ['a', 'e', 'i', 'o', 'u'].includes(sound) ? 'vowel' : 'consonant';
                         } else if (cat === 'custom1') {
-                            type = 'digraph'; // Keep green color styling
+                            type = 'digraph'; 
                         }
                         createTile(tray, sound, type);
                     });
                 }
             });
             
-            // Sync Include All checkbox
             const checkboxes = document.querySelectorAll('.cat-checkbox:not(#toggle-all)');
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
             document.getElementById('toggle-all').checked = allChecked;
@@ -553,16 +557,27 @@
         initVoices();
 
         function getPhoneticSound(text) {
-            return phoneticMap[text.toLowerCase()] || text;
+            const lower = text.toLowerCase();
+            return phoneticMap[lower] || text;
+        }
+
+        function playPhonemeAudio(text) {
+            const key = text.toLowerCase();
+            const src = audioMap[key];
+            if (!src) return false;
+            const audio = new Audio(src);
+            audio.play();
+            return true;
         }
 
         function speakPhoneme(tileText, rateOverride) {
+            if (playPhonemeAudio(tileText)) return;
+
             const soundToSpeak = getPhoneticSound(tileText);
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(soundToSpeak);
 
             if (preferredVoice) utterance.voice = preferredVoice;
-
             utterance.pitch = 0.9;
             utterance.rate = rateOverride || 0.8;
 
