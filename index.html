@@ -557,6 +557,15 @@
             min-height: 2.2rem;
         }
 
+        .pez-phonetic-sub {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #7b6c00;
+            letter-spacing: 1.5px;
+            min-height: 1.1rem;
+        }
+
         .pez-clear-btn {
             align-self: flex-start;
             padding: 7px 18px;
@@ -780,7 +789,10 @@
                     </div>
                     <div class="pez-arrow-row">
                         <div class="pez-arrow">&#8594;</div>
-                        <div class="pez-word-display" id="pez-word-display"></div>
+                        <div>
+                            <div class="pez-word-display" id="pez-word-display"></div>
+                            <div class="pez-phonetic-sub" id="pez-phonetic-sub"></div>
+                        </div>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <button class="pez-sound-btn" id="pez-sound-btn" onclick="pezSoundOut()">&#128266; Sound It Out</button>
@@ -1111,36 +1123,28 @@
             pezSpecial.forEach(t => specialRow.appendChild(makePezTile(t, 'pez-t-digraph')));
         }
 
-        const PHONETIC_MAP = {
-            // Individual consonants
-            "b": "buh", "c": "kuh", "d": "duh", "f": "fff", "g": "guh",
-            "h": "huh", "j": "juh", "k": "kuh", "l": "lll", "m": "mmm",
-            "n": "nnn", "p": "puh", "q": "kwuh", "r": "rrr", "s": "sss",
-            "t": "tuh", "v": "vvv", "w": "wuh", "x": "ks",  "y": "yuh", "z": "zzz",
-            // Individual vowels (short sound)
-            "a": "aah", "e": "ehh", "i": "ihh", "o": "aww", "u": "uhh",
-            // Digraphs
-            "ch": "chuh", "sh": "shh", "th": "thh", "wh": "wuh", "ph": "fff",
-            // R-controlled vowels
-            "ar": "arr", "er": "err", "ir": "err", "or": "orr", "ur": "err",
-            // Vowel teams
-            "ai": "ayy", "ay": "ayy", "au": "aww", "aw": "aww", "ee": "eee",
-            "ew": "yoo", "ea": "eee", "ie": "eye", "igh": "eye", "ow": "oh",
-            "oa": "oh",  "oe": "oh",  "ou": "ow",  "oo": "ooo", "oi": "oy",
-            "ue": "yoo", "ui": "ooo", "oy": "oy",  "eigh": "ayy", "ey": "eee", "ei": "ayy",
-            // Other patterns
-            "dge": "juh", "nk": "nk",  "ng": "ng",  "tch": "chuh", "qu": "kwuh",
-            "ff": "fff",  "ll": "lll", "ss": "sss", "zz": "zzz",
-            "ed": "d",    "ing": "ing",
-            // Silent/blend endings
-            "ck": "kuh", "kn": "nnn", "wr": "rrr", "gh": "", "mb": "mmm", "gn": "nnn"
+        const PHONETIC_SOUNDS = {
+            ch: "chuh", sh: "shhh", th: "thuh", wh: "hwuh", ph: "fuh",
+            ar: "ahr",  er: "er",   ir: "er",   or: "or",   ur: "er",
+            ai: "ay",  ay: "ay",  au: "aw",  aw: "aw",  ee: "ee",
+            ew: "yoo", ea: "ee",  ie: "eye", igh: "eye", ow: "ow",
+            oa: "oh",  oe: "oh",  ou: "ow",  oo: "oo",  oi: "oy",
+            ue: "yoo", ui: "oo",
+            dge: "j",  nk: "ngk", ng: "ng",  tch: "t-ch", qu: "kwuh",
+            ff: "f",   ll: "l",   ss: "s",   zz: "z",
+            ed: "duh", ing: "ing",
+            oy: "oy",  eigh: "ay", ey: "ee", ei: "ay",
+            a: "ah",  b: "buh", c: "kuh", d: "duh", e: "eh",
+            f: "fuh", g: "guh", h: "huh", i: "ih",  j: "juh",
+            k: "kuh", l: "luh", m: "muh", n: "nuh", o: "ah",
+            p: "puh", q: "kwuh", r: "ruh", s: "sss", t: "tuh",
+            u: "uh",  v: "vuh", w: "wuh", x: "ks",  y: "yuh", z: "zuh",
+            ck: "k",  kn: "n",  wr: "r",  gh: "silent", mb: "m", gn: "n"
         };
 
-        function pezPhonetic(tile) {
-            const key = tile.toLowerCase();
-            if (key in PHONETIC_MAP) return PHONETIC_MAP[key];
-            // Fallback: spell it out letter by letter
-            return tile.split('').join(' ');
+        // Returns the phonetic pronunciation for a tile, falling back to the tile text.
+        function getPhoneticSound(tile) {
+            return PHONETIC_SOUNDS[tile.toLowerCase()] || tile;
         }
 
         function pezSpeak(text, rate, pitch, volume) {
@@ -1168,27 +1172,19 @@
             const btn = document.getElementById('pez-sound-btn');
             btn.disabled = true;
 
-            // Sound out each tile individually
+            // Speak each tile's phonetic sound, highlighting its box
             for (let i = 0; i < pezWord.length; i++) {
-                const tile = pezWord[i];
-                const phonetic = pezPhonetic(tile);
-
-                // Highlight the current box
+                const phonetic = getPhoneticSound(pezWord[i]);
                 const box = document.getElementById('pez-box-' + i);
                 box.classList.add('speaking');
-
-                if (phonetic !== '') {
-                    await pezSpeak(phonetic, 0.75, 1.1, 1);
-                }
-
+                await pezSpeak(phonetic, 0.75, 1.1, 1);
                 box.classList.remove('speaking');
                 await pezDelay(300);
             }
 
-            // Pause, then read the full assembled word
+            // Pause then read the full assembled word as a real word
             await pezDelay(600);
-            const fullWord = pezWord.join('');
-            await pezSpeak(fullWord, 0.75, 1.1, 1);
+            await pezSpeak(pezWord.join(''), 0.75, 1.1, 1);
 
             btn.disabled = false;
         }
@@ -1215,6 +1211,9 @@
                 box.classList.toggle('filled', val !== '');
             }
             document.getElementById('pez-word-display').textContent = pezWord.join('');
+            // Show space-separated phonetic sounds as a subtitle
+            document.getElementById('pez-phonetic-sub').textContent =
+                pezWord.map(getPhoneticSound).join('  ');
         }
 
         // =================== INIT ===================
