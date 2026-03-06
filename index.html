@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>1st Grade Blending Board</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #f0f4f8;
@@ -40,10 +40,73 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             display: flex;
+            flex-direction: column;
             height: 100vh;
             overflow: hidden;
             transition: background-color 0.3s, color 0.3s;
         }
+
+        /* =================== TAB NAV =================== */
+        #tab-nav {
+            display: flex;
+            gap: 4px;
+            padding: 8px 16px 0;
+            background: var(--sidebar-bg);
+            border-bottom: 3px solid var(--tray-bg);
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            z-index: 10;
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
+            border: 3px solid transparent;
+            border-radius: 10px 10px 0 0;
+            font-family: 'Lexend', sans-serif;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            background: var(--tray-bg);
+            color: var(--text-color);
+            transition: background 0.2s;
+            position: relative;
+            bottom: -3px;
+        }
+
+        .tab-btn.active {
+            background: var(--bg-color);
+            border-color: var(--tray-bg);
+            border-bottom-color: var(--bg-color);
+            z-index: 1;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(0,0,0,0.08);
+        }
+
+        /* =================== TAB PANELS =================== */
+        .tab-panel {
+            display: none;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        #tab-blending {
+            flex-direction: row;
+            overflow: hidden;
+        }
+
+        #tab-pezzello {
+            flex-direction: column;
+            overflow-y: auto;
+            background: #eceff1;
+        }
+
+        /* =================== EXISTING BLENDING BOARD STYLES =================== */
 
         /* Sidebar */
         #sidebar {
@@ -304,81 +367,423 @@
             cursor: pointer;
             accent-color: #4a5568;
         }
+
+        /* =================== PEZZELLO TAB STYLES =================== */
+
+        .pez-board {
+            font-family: 'Poppins', sans-serif;
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 22px;
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 20px;
+            max-width: 1160px;
+            width: 100%;
+            margin: 20px auto;
+            box-sizing: border-box;
+            box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+        }
+
+        .pez-left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .pez-right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .pez-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pez-label {
+            font-weight: 800;
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 2px 0 2px 2px;
+        }
+
+        .pez-label-digraph    { color: #2e7d32; }
+        .pez-label-rcontrol   { color: #e65100; }
+        .pez-label-vowelteam  { color: #ad1457; }
+        .pez-label-other      { color: #1a1a1a; }
+        .pez-label-cv         { color: #1565c0; font-size: 0.75rem; }
+
+        .pez-tiles-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        /* Base tile */
+        .pez-tile {
+            min-width: 52px;
+            height: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            border: none;
+            padding: 0 9px;
+            color: #1a1a1a;
+            transition: transform 0.08s ease, box-shadow 0.08s ease;
+        }
+
+        .pez-tile:hover  { transform: translateY(-2px); }
+        .pez-tile:active { transform: scale(0.91) translateY(2px); }
+
+        /* Tile color variants */
+        .pez-t-digraph {
+            background: #AEEA00;
+            box-shadow: 0 4px 0 #7aaa00;
+        }
+        .pez-t-digraph:hover  { box-shadow: 0 6px 0 #7aaa00; }
+        .pez-t-digraph:active { box-shadow: 0 1px 0 #7aaa00; }
+
+        .pez-t-rcontrol {
+            background: #FFD600;
+            box-shadow: 0 4px 0 #c4a600;
+        }
+        .pez-t-rcontrol:hover  { box-shadow: 0 6px 0 #c4a600; }
+        .pez-t-rcontrol:active { box-shadow: 0 1px 0 #c4a600; }
+
+        .pez-t-vowelteam {
+            background: #E91E8C;
+            color: #fff;
+            box-shadow: 0 4px 0 #a01260;
+        }
+        .pez-t-vowelteam:hover  { box-shadow: 0 6px 0 #a01260; }
+        .pez-t-vowelteam:active { box-shadow: 0 1px 0 #a01260; }
+
+        .pez-t-other {
+            background: #ffffff;
+            border: 2px solid #1a1a1a;
+            box-shadow: 0 4px 0 #555;
+        }
+        .pez-t-other:hover  { box-shadow: 0 6px 0 #555; }
+        .pez-t-other:active { box-shadow: 0 1px 0 #555; }
+
+        .pez-t-vowel {
+            background: #D32F2F;
+            color: #fff;
+            box-shadow: 0 4px 0 #8c1c1c;
+        }
+        .pez-t-vowel:hover  { box-shadow: 0 6px 0 #8c1c1c; }
+        .pez-t-vowel:active { box-shadow: 0 1px 0 #8c1c1c; }
+
+        .pez-t-consonant {
+            background: #29B6F6;
+            box-shadow: 0 4px 0 #0277a8;
+        }
+        .pez-t-consonant:hover  { box-shadow: 0 6px 0 #0277a8; }
+        .pez-t-consonant:active { box-shadow: 0 1px 0 #0277a8; }
+
+        /* My Word Builder */
+        .pez-my-word {
+            background: #f0f4f8;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pez-my-word-label {
+            font-weight: 800;
+            font-size: 1rem;
+            color: #2d3748;
+        }
+
+        .pez-boxes-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pez-box {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #aab;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            background: #fff;
+            color: #1a1a1a;
+            transition: border-color 0.15s, background 0.15s;
+            cursor: default;
+        }
+
+        .pez-box.filled {
+            border-color: #444;
+            background: #fffde7;
+        }
+
+        .pez-arrow-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pez-arrow {
+            font-size: 1.6rem;
+            color: #666;
+            line-height: 1;
+        }
+
+        .pez-word-display {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.7rem;
+            color: #1a1a1a;
+            letter-spacing: 3px;
+            min-height: 2.2rem;
+        }
+
+        .pez-clear-btn {
+            align-self: flex-start;
+            padding: 7px 18px;
+            background: #ffadad;
+            border: 2px solid #ff7070;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+            color: #5a1a1a;
+        }
+        .pez-clear-btn:hover  { transform: translateY(-1px); }
+        .pez-clear-btn:active { transform: translateY(1px); }
+
+        /* Consonants & Vowels section */
+        .pez-cv-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pez-cv-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .pez-cv-grid .pez-tile {
+            min-width: unset;
+            width: 100%;
+        }
+
+        .pez-divider {
+            height: 2px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 2px 0;
+        }
+
+        /* Bottom hot-pink section in left col */
+        .pez-section-nolabel {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .pez-board {
+                grid-template-columns: 1fr;
+                margin: 12px;
+                width: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .pez-tile {
+                min-width: 44px;
+                height: 44px;
+                font-size: 0.9rem;
+            }
+            .pez-box {
+                width: 44px;
+                height: 44px;
+                font-size: 0.85rem;
+            }
+            .pez-word-display {
+                font-size: 1.3rem;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <h3 style="margin-top:0; padding-left:10px;">Category Controls</h3>
-        <label class="control-label">
-            <input type="checkbox" id="toggle-all" onchange="toggleAllCategories(this.checked)" checked class="cat-checkbox"> Include All
-        </label>
-        <hr style="width:90%; border:1px solid var(--tray-bg); margin: 10px auto;">
-        <label class="control-label" style="background-color: var(--digraph-color);">
-            <input type="checkbox" class="cat-checkbox" data-cat="digraph" onchange="updateTray()" checked> Digraphs
-        </label>
-        <label class="control-label" style="background-color: var(--r-controlled-color);">
-            <input type="checkbox" class="cat-checkbox" data-cat="r-controlled" onchange="updateTray()" checked> R-Controlled
-        </label>
-        <label class="control-label" style="background-color: var(--vowel-team-color);">
-            <input type="checkbox" class="cat-checkbox" data-cat="vowel-team" onchange="updateTray()" checked> Vowel Teams
-        </label>
-        <label class="control-label" style="background-color: var(--other-color); border: 2px solid #cbd5e0;">
-            <input type="checkbox" class="cat-checkbox" data-cat="other" onchange="updateTray()" checked> Other Sounds
-        </label>
-        <label class="control-label" style="background: linear-gradient(90deg, var(--consonant-color) 0%, var(--vowel-color) 100%); color: #2d3748;">
-            <input type="checkbox" class="cat-checkbox" data-cat="alphabet" onchange="updateTray()" checked> Consonants/Vowels
-        </label>
-    </div>
+    <nav id="tab-nav">
+        <button class="tab-btn active" onclick="switchTab(this, 'blending')">Blending Board</button>
+        <button class="tab-btn" onclick="switchTab(this, 'pezzello')">Pezzello</button>
+    </nav>
 
-    <div id="main-container">
-        <header>
-            <h2 style="margin:0;">Blending Board</h2>
-            <div style="display:flex; gap:10px;">
-                <button class="action-btn btn-toggle" onclick="toggleDots()">Toggle Dots</button>
-                <button class="action-btn btn-toggle" onclick="toggleTheme()">🌓 Theme</button>
+    <!-- =================== BLENDING BOARD TAB =================== -->
+    <div id="tab-blending" class="tab-panel active">
+
+        <div id="sidebar">
+            <h3 style="margin-top:0; padding-left:10px;">Category Controls</h3>
+            <label class="control-label">
+                <input type="checkbox" id="toggle-all" onchange="toggleAllCategories(this.checked)" checked class="cat-checkbox"> Include All
+            </label>
+            <hr style="width:90%; border:1px solid var(--tray-bg); margin: 10px auto;">
+            <label class="control-label" style="background-color: var(--digraph-color);">
+                <input type="checkbox" class="cat-checkbox" data-cat="digraph" onchange="updateTray()" checked> Digraphs
+            </label>
+            <label class="control-label" style="background-color: var(--r-controlled-color);">
+                <input type="checkbox" class="cat-checkbox" data-cat="r-controlled" onchange="updateTray()" checked> R-Controlled
+            </label>
+            <label class="control-label" style="background-color: var(--vowel-team-color);">
+                <input type="checkbox" class="cat-checkbox" data-cat="vowel-team" onchange="updateTray()" checked> Vowel Teams
+            </label>
+            <label class="control-label" style="background-color: var(--other-color); border: 2px solid #cbd5e0;">
+                <input type="checkbox" class="cat-checkbox" data-cat="other" onchange="updateTray()" checked> Other Sounds
+            </label>
+            <label class="control-label" style="background: linear-gradient(90deg, var(--consonant-color) 0%, var(--vowel-color) 100%); color: #2d3748;">
+                <input type="checkbox" class="cat-checkbox" data-cat="alphabet" onchange="updateTray()" checked> Consonants/Vowels
+            </label>
+        </div>
+
+        <div id="main-container">
+            <header>
+                <h2 style="margin:0;">Blending Board</h2>
+                <div style="display:flex; gap:10px;">
+                    <button class="action-btn btn-toggle" onclick="toggleDots()">Toggle Dots</button>
+                    <button class="action-btn btn-toggle" onclick="toggleTheme()">🌓 Theme</button>
+                </div>
+            </header>
+
+            <div id="word-section">
+                <!-- Selected tiles will appear here -->
             </div>
-        </header>
 
-        <div id="word-section">
-            <!-- Selected tiles will appear here -->
-        </div>
-
-        <div id="controls">
-            <div class="settings-bar">
-                Limit:
-                <select id="word-length" onchange="saveSettings()">
-                    <option value="custom" selected>None</option>
-                    <option value="1">1 Tile</option>
-                    <option value="2">2 Tiles</option>
-                    <option value="3">3 Tiles</option>
-                    <option value="4">4 Tiles</option>
-                    <option value="5">5 Tiles</option>
-                </select>
+            <div id="controls">
+                <div class="settings-bar">
+                    Limit:
+                    <select id="word-length" onchange="saveSettings()">
+                        <option value="custom" selected>None</option>
+                        <option value="1">1 Tile</option>
+                        <option value="2">2 Tiles</option>
+                        <option value="3">3 Tiles</option>
+                        <option value="4">4 Tiles</option>
+                        <option value="5">5 Tiles</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="action-btn btn-challenge" onclick="challengeMe()">Challenge Me</button>
+                    <button class="action-btn btn-sound-out" onclick="soundOut()">Slow Sound Out</button>
+                    <button class="action-btn btn-read-word" onclick="readWord()">Read Word</button>
+                    <button class="action-btn btn-clear" onclick="clearWord()">Clear</button>
+                </div>
             </div>
-            <div style="display:flex; gap: 10px; flex-wrap: wrap;">
-                <button class="action-btn btn-challenge" onclick="challengeMe()">Challenge Me</button>
-                <button class="action-btn btn-sound-out" onclick="soundOut()">Slow Sound Out</button>
-                <button class="action-btn btn-read-word" onclick="readWord()">Read Word</button>
-                <button class="action-btn btn-clear" onclick="clearWord()">Clear</button>
+
+            <div id="tray-area">
+                <!-- Tiles will be rendered here -->
             </div>
         </div>
 
-        <div id="tray-area">
-            <!-- Tiles will be rendered here -->
+        <div id="history-drawer" class="collapsed">
+            <button class="toggle-history" onclick="toggleHistory()">📖</button>
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin:0;">History</h3>
+                <button class="action-btn btn-toggle" style="padding:5px 10px;" onclick="exportHistory()">💾</button>
+            </div>
+            <ul class="history-list" id="history-list"></ul>
         </div>
-    </div>
 
-    <div id="history-drawer" class="collapsed">
-        <button class="toggle-history" onclick="toggleHistory()">📖</button>
-        <div style="display:flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin:0;">History</h3>
-            <button class="action-btn btn-toggle" style="padding:5px 10px;" onclick="exportHistory()">💾</button>
-        </div>
-        <ul class="history-list" id="history-list"></ul>
-    </div>
+    </div><!-- end #tab-blending -->
+
+    <!-- =================== PEZZELLO TAB =================== -->
+    <div id="tab-pezzello" class="tab-panel">
+
+        <div class="pez-board" id="pez-board">
+
+            <!-- LEFT COLUMN: phonics sections -->
+            <div class="pez-left-col">
+
+                <!-- 1. DIGRAPHS -->
+                <div class="pez-section" id="pez-sec-digraphs"></div>
+
+                <!-- 2. R-CONTROLLED VOWELS -->
+                <div class="pez-section" id="pez-sec-rcontrol"></div>
+
+                <!-- 3. VOWEL TEAMS -->
+                <div class="pez-section" id="pez-sec-vowelteams"></div>
+
+                <!-- 4. OTHER -->
+                <div class="pez-section" id="pez-sec-other"></div>
+
+                <!-- 5. BOTTOM ROW (hot-pink, no label) -->
+                <div class="pez-section-nolabel" id="pez-sec-bottom"></div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: My Word + Consonants & Vowels -->
+            <div class="pez-right-col">
+
+                <!-- My Word Builder -->
+                <div class="pez-my-word">
+                    <div class="pez-my-word-label">My Word</div>
+                    <div class="pez-boxes-row" id="pez-boxes-row">
+                        <div class="pez-box" id="pez-box-0"></div>
+                        <div class="pez-box" id="pez-box-1"></div>
+                        <div class="pez-box" id="pez-box-2"></div>
+                        <div class="pez-box" id="pez-box-3"></div>
+                        <div class="pez-box" id="pez-box-4"></div>
+                        <div class="pez-box" id="pez-box-5"></div>
+                    </div>
+                    <div class="pez-arrow-row">
+                        <div class="pez-arrow">&#8594;</div>
+                        <div class="pez-word-display" id="pez-word-display"></div>
+                    </div>
+                    <button class="pez-clear-btn" onclick="pezClearWord()">CLEAR</button>
+                </div>
+
+                <!-- Consonants and Vowels -->
+                <div class="pez-cv-section">
+                    <div class="pez-label pez-label-cv">Consonants and Vowels</div>
+                    <div class="pez-cv-grid" id="pez-cv-grid"></div>
+                    <div class="pez-divider"></div>
+                    <!-- Special silent/blend row -->
+                    <div class="pez-tiles-row" id="pez-special-row"></div>
+                </div>
+
+            </div>
+
+        </div><!-- end .pez-board -->
+
+    </div><!-- end #tab-pezzello -->
 
     <script>
+        // =================== TAB SWITCHING ===================
+        function switchTab(btn, tabName) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // =================== BLENDING BOARD JS (unchanged) ===================
         const sounds = {
             digraph: ['ch', 'sh', 'th', 'wh', 'ph', 'ck', 'kn', 'wr', 'gh', 'mb', 'gn'],
             'r-controlled': ['ar', 'er', 'ir', 'or', 'ur'],
@@ -409,10 +814,7 @@
         function updateTray() {
             const tray = document.getElementById('tray-area');
             tray.innerHTML = '';
-            
-            // Render in exact requested order
             const categoryOrder = ['digraph', 'r-controlled', 'vowel-team', 'other', 'alphabet'];
-            
             categoryOrder.forEach(cat => {
                 const checkbox = document.querySelector(`.cat-checkbox[data-cat="${cat}"]`);
                 if (checkbox && checkbox.checked) {
@@ -425,7 +827,6 @@
                     });
                 }
             });
-            
             const checkboxes = document.querySelectorAll('.cat-checkbox:not(#toggle-all)');
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
             document.getElementById('toggle-all').checked = allChecked;
@@ -450,7 +851,6 @@
         function addSound(sound, type) {
             const maxLength = document.getElementById('word-length').value;
             if (maxLength !== 'custom' && currentWord.length >= parseInt(maxLength)) return;
-
             speakPhoneme(sound, 1.0);
             currentWord.push({ sound, type });
             updateWordSection();
@@ -470,16 +870,13 @@
             currentWord.forEach((item, index) => {
                 const container = document.createElement('div');
                 container.className = 'tile-container';
-                
                 const tile = document.createElement('div');
                 tile.className = 'tile word-tile';
                 tile.dataset.type = item.type;
                 tile.textContent = item.sound;
                 tile.onclick = () => removeSound(index);
-                
                 const dot = document.createElement('div');
                 dot.className = 'blending-dot';
-                
                 container.appendChild(tile);
                 container.appendChild(dot);
                 section.appendChild(container);
@@ -570,21 +967,18 @@
 
         function speakPhoneme(tileText, rateOverride) {
             if (playPhonemeAudio(tileText)) return;
-
             const soundToSpeak = getPhoneticSound(tileText);
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(soundToSpeak);
-
             if (preferredVoice) utterance.voice = preferredVoice;
             utterance.pitch = 0.9;
             utterance.rate = rateOverride || 0.8;
-
             window.speechSynthesis.speak(utterance);
         }
 
         async function soundOut() {
             for (const item of currentWord) {
-                speakPhoneme(item.sound, 0.4); 
+                speakPhoneme(item.sound, 0.4);
                 await new Promise(r => setTimeout(r, 1000));
             }
         }
@@ -598,14 +992,127 @@
             document.getElementById('history-drawer').classList.toggle('collapsed');
         }
 
+        // =================== PEZZELLO BOARD JS ===================
+
+        const PEZ_MAX = 6;
+        let pezWord = [];
+
+        const pezVowelSet = new Set(['a', 'e', 'i', 'o', 'u']);
+
+        const pezSections = [
+            {
+                containerId: 'pez-sec-digraphs',
+                label: 'Digraphs',
+                labelClass: 'pez-label-digraph',
+                tiles: ['ch', 'sh', 'th', 'wh', 'ph'],
+                tileClass: 'pez-t-digraph'
+            },
+            {
+                containerId: 'pez-sec-rcontrol',
+                label: 'R-Controlled Vowels',
+                labelClass: 'pez-label-rcontrol',
+                tiles: ['ar', 'er', 'ir', 'or', 'ur'],
+                tileClass: 'pez-t-rcontrol'
+            },
+            {
+                containerId: 'pez-sec-vowelteams',
+                label: 'Vowel Teams',
+                labelClass: 'pez-label-vowelteam',
+                tiles: ['ai', 'ay', 'au', 'aw', 'ee', 'ew', 'ea', 'ie', 'igh', 'ow', 'oa', 'oe', 'ou', 'oo', 'oi', 'ue', 'ui'],
+                tileClass: 'pez-t-vowelteam'
+            },
+            {
+                containerId: 'pez-sec-other',
+                label: 'Other',
+                labelClass: 'pez-label-other',
+                tiles: ['dge', 'nk', 'ng', 'tch', 'qu', 'ff', 'll', 'ss', 'zz', 'ed', 'ing'],
+                tileClass: 'pez-t-other'
+            }
+        ];
+
+        // Bottom hot-pink row (vowel team tiles, no label)
+        const pezBottomTiles  = ['oy', 'eigh', 'ey', 'ei'];
+        const pezAlphabet     = 'abcdefghijklmnopqrstuvwxyz'.split('');
+        const pezSpecial      = ['ck', 'kn', 'wr', 'gh', 'mb', 'gn'];
+
+        function makePezTile(text, tileClass) {
+            const el = document.createElement('div');
+            el.className = 'pez-tile ' + tileClass;
+            el.textContent = text;
+            el.addEventListener('click', () => pezAddTile(text));
+            return el;
+        }
+
+        function buildPezBoard() {
+            // Labeled sections
+            pezSections.forEach(sec => {
+                const container = document.getElementById(sec.containerId);
+                container.innerHTML = '';
+
+                const lbl = document.createElement('div');
+                lbl.className = 'pez-label ' + sec.labelClass;
+                lbl.textContent = sec.label;
+                container.appendChild(lbl);
+
+                const row = document.createElement('div');
+                row.className = 'pez-tiles-row';
+                sec.tiles.forEach(t => row.appendChild(makePezTile(t, sec.tileClass)));
+                container.appendChild(row);
+            });
+
+            // Bottom hot-pink row (no label)
+            const bottomContainer = document.getElementById('pez-sec-bottom');
+            bottomContainer.innerHTML = '';
+            const bottomRow = document.createElement('div');
+            bottomRow.className = 'pez-tiles-row';
+            pezBottomTiles.forEach(t => bottomRow.appendChild(makePezTile(t, 'pez-t-vowelteam')));
+            bottomContainer.appendChild(bottomRow);
+
+            // a-z grid
+            const cvGrid = document.getElementById('pez-cv-grid');
+            cvGrid.innerHTML = '';
+            pezAlphabet.forEach(letter => {
+                const cls = pezVowelSet.has(letter) ? 'pez-t-vowel' : 'pez-t-consonant';
+                cvGrid.appendChild(makePezTile(letter, cls));
+            });
+
+            // Special silent/blend row
+            const specialRow = document.getElementById('pez-special-row');
+            specialRow.innerHTML = '';
+            pezSpecial.forEach(t => specialRow.appendChild(makePezTile(t, 'pez-t-digraph')));
+        }
+
+        function pezAddTile(text) {
+            if (pezWord.length >= PEZ_MAX) return;
+            pezWord.push(text);
+            pezUpdateDisplay();
+        }
+
+        function pezClearWord() {
+            pezWord = [];
+            pezUpdateDisplay();
+        }
+
+        function pezUpdateDisplay() {
+            for (let i = 0; i < PEZ_MAX; i++) {
+                const box = document.getElementById('pez-box-' + i);
+                const val = pezWord[i] || '';
+                box.textContent = val;
+                box.classList.toggle('filled', val !== '');
+            }
+            document.getElementById('pez-word-display').textContent = pezWord.join('');
+        }
+
+        // =================== INIT ===================
         window.onload = () => {
             const savedLimit = localStorage.getItem('wordLimit');
             if (savedLimit) document.getElementById('word-length').value = savedLimit;
-            
+
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
-            
+
             updateTray();
+            buildPezBoard();
         };
     </script>
 </body>
