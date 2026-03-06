@@ -1232,20 +1232,50 @@
             return new Promise(r => setTimeout(r, ms));
         }
 
+        function pezPlayTileSound(tile) {
+            return new Promise(resolve => {
+                const key = String(tile || '').toLowerCase();
+                const src = 'audio/' + key + '.mp3';
+                const audio = new Audio(src);
+                let settled = false;
+
+                const finish = () => {
+                    if (settled) return;
+                    settled = true;
+                    resolve();
+                };
+
+                audio.addEventListener('ended', finish, { once: true });
+                audio.addEventListener('error', async () => {
+                    const phoneticSpeech = getPhoneticSpeech(tile);
+                    await pezSpeak(phoneticSpeech, 0.7, 1.1, 1);
+                    finish();
+                }, { once: true });
+
+                const playPromise = audio.play();
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch(async () => {
+                        const phoneticSpeech = getPhoneticSpeech(tile);
+                        await pezSpeak(phoneticSpeech, 0.7, 1.1, 1);
+                        finish();
+                    });
+                }
+            });
+        }
+
         async function pezSoundOut() {
             if (pezWord.length === 0) return;
             const btn = document.getElementById('pez-sound-btn');
             btn.disabled = true;
             window.speechSynthesis.cancel();
 
-            // Speak each tile one by one with a short pause.
+            // Play each tile one by one, waiting for clip end and then 300ms.
             for (let i = 0; i < pezWord.length; i++) {
-                const phoneticSpeech = getPhoneticSpeech(pezWord[i]);
                 const box = document.getElementById('pez-box-' + i);
                 box.classList.add('speaking');
-                await pezSpeak(phoneticSpeech, 0.7, 1.1, 1);
+                await pezPlayTileSound(pezWord[i]);
                 box.classList.remove('speaking');
-                await pezDelay(250);
+                if (i < pezWord.length - 1) await pezDelay(300);
             }
 
             // Pause then read the full assembled word as a real word
