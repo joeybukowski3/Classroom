@@ -862,6 +862,7 @@
         };
 
         const challengeWords = ['cat', 'ship', 'shop', 'fish', 'chat', 'path', 'duck', 'king', 'sing', 'book', 'moon', 'star', 'park', 'bird', 'coat', 'rain'];
+        const UPLOADED_AUDIO_TILES = new Set(['ar', 'ch', 'er', 'ir', 'or', 'ph', 'sh', 'th', 'ur', 'wh']);
 
         let currentWord = [];
         let history = [];
@@ -1049,10 +1050,7 @@
         function playTileAudioOrFallback(tileText, rateOverride) {
             return new Promise(resolve => {
                 const key = String(tileText || '').toLowerCase();
-                const src = 'audio/' + key + '.mp3';
-                const audio = new Audio(src);
                 let done = false;
-                let fallbackStarted = false;
 
                 const finish = () => {
                     if (done) return;
@@ -1061,8 +1059,6 @@
                 };
 
                 const speakFallback = () => {
-                    if (fallbackStarted) return;
-                    fallbackStarted = true;
                     const soundToSpeak = getPhoneticSound(tileText);
                     window.speechSynthesis.cancel();
                     const utterance = new SpeechSynthesisUtterance(soundToSpeak);
@@ -1074,13 +1070,20 @@
                     window.speechSynthesis.speak(utterance);
                 };
 
+                if (!UPLOADED_AUDIO_TILES.has(key)) {
+                    speakFallback();
+                    return;
+                }
+
+                const src = 'audio/' + key + '.mp3';
+                const audio = new Audio(src);
                 audio.addEventListener('ended', finish, { once: true });
-                audio.addEventListener('error', speakFallback, { once: true });
+                audio.addEventListener('error', finish, { once: true });
 
                 const playPromise = audio.play();
                 if (playPromise && typeof playPromise.catch === 'function') {
                     playPromise.catch(() => {
-                        speakFallback();
+                        finish();
                     });
                 }
             });
@@ -1254,8 +1257,6 @@
         function pezPlayTileSound(tile) {
             return new Promise(resolve => {
                 const key = String(tile || '').toLowerCase();
-                const src = 'audio/' + key + '.mp3';
-                const audio = new Audio(src);
                 let settled = false;
 
                 const finish = () => {
@@ -1264,18 +1265,20 @@
                     resolve();
                 };
 
-                audio.addEventListener('ended', finish, { once: true });
-                audio.addEventListener('error', async () => {
+                if (!UPLOADED_AUDIO_TILES.has(key)) {
                     const phoneticSpeech = getPhoneticSpeech(tile);
-                    await pezSpeak(phoneticSpeech, 0.7, 1.1, 1);
-                    finish();
-                }, { once: true });
+                    pezSpeak(phoneticSpeech, 0.7, 1.1, 1).then(finish);
+                    return;
+                }
+
+                const src = 'audio/' + key + '.mp3';
+                const audio = new Audio(src);
+                audio.addEventListener('ended', finish, { once: true });
+                audio.addEventListener('error', finish, { once: true });
 
                 const playPromise = audio.play();
                 if (playPromise && typeof playPromise.catch === 'function') {
-                    playPromise.catch(async () => {
-                        const phoneticSpeech = getPhoneticSpeech(tile);
-                        await pezSpeak(phoneticSpeech, 0.7, 1.1, 1);
+                    playPromise.catch(() => {
                         finish();
                     });
                 }
