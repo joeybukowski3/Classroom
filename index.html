@@ -1300,9 +1300,11 @@
                 if (i < pezWord.length - 1) await pezDelay(300);
             }
 
-            // Pause then read the full assembled word as a real word
-            await pezDelay(600);
-            await pezSpeak(pezWord.join(''), 0.7, 1.1, 1);
+            // Read the assembled word only when there is an actual multi-tile word.
+            if (pezWord.length > 1) {
+                await pezDelay(600);
+                await pezSpeak(pezWord.join(''), 0.7, 1.1, 1);
+            }
 
             btn.disabled = false;
         }
