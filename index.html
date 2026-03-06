@@ -688,12 +688,12 @@
 <body>
 
     <nav id="tab-nav">
-        <button class="tab-btn active" onclick="switchTab(this, 'blending')">Blending Board</button>
-        <button class="tab-btn" onclick="switchTab(this, 'pezzello')">Pezzello</button>
+        <button class="tab-btn" onclick="switchTab(this, 'blending')">Blending Board</button>
+        <button class="tab-btn active" onclick="switchTab(this, 'pezzello')">Pezzello</button>
     </nav>
 
     <!-- =================== BLENDING BOARD TAB =================== -->
-    <div id="tab-blending" class="tab-panel active">
+    <div id="tab-blending" class="tab-panel">
 
         <div id="sidebar">
             <h3 style="margin-top:0; padding-left:10px;">Category Controls</h3>
@@ -768,7 +768,7 @@
     </div><!-- end #tab-blending -->
 
     <!-- =================== PEZZELLO TAB =================== -->
-    <div id="tab-pezzello" class="tab-panel">
+    <div id="tab-pezzello" class="tab-panel active">
 
         <div class="pez-board" id="pez-board">
 
@@ -859,12 +859,6 @@
             'ar': 'ar', 'er': 'er', 'ir': 'er', 'or': 'or', 'ur': 'er',
             'ai': 'ay', 'ay': 'ay', 'au': 'aw', 'aw': 'aw', 'ee': 'ee', 'ew': 'oo', 'ea': 'ee', 'ie': 'eye', 'igh': 'eye', 'ow': 'ow', 'oa': 'oh', 'oe': 'oh', 'ou': 'ow', 'oo': 'oo', 'oi': 'oy', 'ue': 'oo', 'ui': 'oo', 'oy': 'oy', 'eigh': 'ay', 'ey': 'ee', 'ei': 'ay',
             'dge': 'edge', 'nk': 'ngk', 'ng': 'ng', 'tch': 'ch', 'qu': 'kwa', 'ff': 'f', 'll': 'l', 'ss': 's', 'zz': 'z', 'ed': 'ed', 'ing': 'ing'
-        };
-
-        const audioMap = {
-            'ch': 'sounds/ch.mp3',
-            'sh': 'sounds/sh.mp3',
-            'th': 'sounds/th.mp3'
         };
 
         const challengeWords = ['cat', 'ship', 'shop', 'fish', 'chat', 'path', 'duck', 'king', 'sing', 'book', 'moon', 'star', 'park', 'bird', 'coat', 'rain'];
@@ -1052,30 +1046,55 @@
             return phoneticMap[lower] || text;
         }
 
-        function playPhonemeAudio(text) {
-            const key = text.toLowerCase();
-            const src = audioMap[key];
-            if (!src) return false;
-            const audio = new Audio(src);
-            audio.play();
-            return true;
+        function playTileAudioOrFallback(tileText, rateOverride) {
+            return new Promise(resolve => {
+                const key = String(tileText || '').toLowerCase();
+                const src = 'audio/' + key + '.mp3';
+                const audio = new Audio(src);
+                let done = false;
+                let fallbackStarted = false;
+
+                const finish = () => {
+                    if (done) return;
+                    done = true;
+                    resolve();
+                };
+
+                const speakFallback = () => {
+                    if (fallbackStarted) return;
+                    fallbackStarted = true;
+                    const soundToSpeak = getPhoneticSound(tileText);
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(soundToSpeak);
+                    if (preferredVoice) utterance.voice = preferredVoice;
+                    utterance.pitch = 0.9;
+                    utterance.rate = rateOverride || 0.8;
+                    utterance.onend = finish;
+                    utterance.onerror = finish;
+                    window.speechSynthesis.speak(utterance);
+                };
+
+                audio.addEventListener('ended', finish, { once: true });
+                audio.addEventListener('error', speakFallback, { once: true });
+
+                const playPromise = audio.play();
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch(() => {
+                        speakFallback();
+                    });
+                }
+            });
         }
 
         function speakPhoneme(tileText, rateOverride) {
-            if (playPhonemeAudio(tileText)) return;
-            const soundToSpeak = getPhoneticSound(tileText);
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(soundToSpeak);
-            if (preferredVoice) utterance.voice = preferredVoice;
-            utterance.pitch = 0.9;
-            utterance.rate = rateOverride || 0.8;
-            window.speechSynthesis.speak(utterance);
+            playTileAudioOrFallback(tileText, rateOverride);
         }
 
         async function soundOut() {
-            for (const item of currentWord) {
-                speakPhoneme(item.sound, 0.4);
-                await new Promise(r => setTimeout(r, 1000));
+            window.speechSynthesis.cancel();
+            for (let i = 0; i < currentWord.length; i++) {
+                await playTileAudioOrFallback(currentWord[i].sound, 0.4);
+                if (i < currentWord.length - 1) await new Promise(r => setTimeout(r, 300));
             }
         }
 
