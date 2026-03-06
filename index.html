@@ -664,6 +664,25 @@
                 font-size: 1.3rem;
             }
         }
+
+        #last-update-footnote {
+            position: fixed;
+            left: 10px;
+            bottom: 8px;
+            z-index: 20;
+            font-size: 0.72rem;
+            color: rgba(45, 55, 72, 0.78);
+            background: rgba(255, 255, 255, 0.7);
+            padding: 3px 8px;
+            border-radius: 8px;
+            pointer-events: none;
+            backdrop-filter: blur(1px);
+        }
+
+        [data-theme="dark"] #last-update-footnote {
+            color: rgba(247, 250, 252, 0.88);
+            background: rgba(26, 32, 44, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -815,6 +834,8 @@
 
     </div><!-- end #tab-pezzello -->
 
+    <div id="last-update-footnote" aria-live="polite">Last update: --</div>
+
     <script>
         // =================== TAB SWITCHING ===================
         function switchTab(btn, tabName) {
@@ -851,8 +872,34 @@
         let currentWord = [];
         let history = [];
         let showDots = true;
+        const LAST_UPDATE_KEY = 'siteLastUpdateISO';
 
-        function updateTray() {
+        function formatUpdateTimestamp(isoString) {
+            const d = new Date(isoString);
+            if (Number.isNaN(d.getTime())) return '--';
+            return d.toLocaleString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function renderLastUpdate(isoString) {
+            const el = document.getElementById('last-update-footnote');
+            if (!el) return;
+            el.textContent = 'Last update: ' + formatUpdateTimestamp(isoString);
+        }
+
+        function markSiteUpdated() {
+            const isoNow = new Date().toISOString();
+            localStorage.setItem(LAST_UPDATE_KEY, isoNow);
+            renderLastUpdate(isoNow);
+        }
+
+        function updateTray(markUpdate = true) {
             const tray = document.getElementById('tray-area');
             tray.innerHTML = '';
             const categoryOrder = ['digraph', 'r-controlled', 'vowel-team', 'other', 'alphabet'];
@@ -871,6 +918,7 @@
             const checkboxes = document.querySelectorAll('.cat-checkbox:not(#toggle-all)');
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
             document.getElementById('toggle-all').checked = allChecked;
+            if (markUpdate) markSiteUpdated();
         }
 
         function toggleAllCategories(checked) {
@@ -895,11 +943,13 @@
             speakPhoneme(sound, 1.0);
             currentWord.push({ sound, type });
             updateWordSection();
+            markSiteUpdated();
         }
 
         function removeSound(index) {
             currentWord.splice(index, 1);
             updateWordSection();
+            markSiteUpdated();
         }
 
         function updateWordSection() {
@@ -931,6 +981,7 @@
             }
             currentWord = [];
             updateWordSection();
+            markSiteUpdated();
         }
 
         function addToHistory(word) {
@@ -942,6 +993,7 @@
                 li.textContent = word;
                 li.onclick = () => speakPhoneme(word, 1.0);
                 list.prepend(li);
+                markSiteUpdated();
             }
         }
 
@@ -958,6 +1010,7 @@
         function toggleDots() {
             showDots = !showDots;
             updateWordSection();
+            markSiteUpdated();
         }
 
         function toggleTheme() {
@@ -966,6 +1019,7 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
+            markSiteUpdated();
         }
 
         function challengeMe() {
@@ -975,6 +1029,7 @@
 
         function saveSettings() {
             localStorage.setItem('wordLimit', document.getElementById('word-length').value);
+            markSiteUpdated();
         }
 
         let preferredVoice = null;
@@ -1204,6 +1259,7 @@
             if (pezWord.length >= PEZ_MAX) return;
             pezWord.push(text);
             pezUpdateDisplay();
+            markSiteUpdated();
         }
 
         function pezClearWord() {
@@ -1212,6 +1268,7 @@
             pezUpdateDisplay();
             const btn = document.getElementById('pez-sound-btn');
             if (btn) btn.disabled = false;
+            markSiteUpdated();
         }
 
         function pezUpdateDisplay() {
@@ -1235,7 +1292,11 @@
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
 
-            updateTray();
+            const lastUpdateISO = localStorage.getItem(LAST_UPDATE_KEY);
+            if (lastUpdateISO) renderLastUpdate(lastUpdateISO);
+            else markSiteUpdated();
+
+            updateTray(false);
             buildPezBoard();
         };
     </script>
