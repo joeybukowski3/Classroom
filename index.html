@@ -573,6 +573,32 @@
         .pez-clear-btn:hover  { transform: translateY(-1px); }
         .pez-clear-btn:active { transform: translateY(1px); }
 
+        .pez-sound-btn {
+            align-self: flex-start;
+            padding: 7px 18px;
+            background: #b3e5fc;
+            border: 2px solid #0288d1;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            color: #01579b;
+        }
+        .pez-sound-btn:hover:not(:disabled)  { transform: translateY(-1px); }
+        .pez-sound-btn:active:not(:disabled) { transform: translateY(1px); }
+        .pez-sound-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .pez-box.speaking {
+            border-color: #f9a825;
+            background: #fff9c4;
+            box-shadow: 0 0 0 3px rgba(249,168,37,0.5);
+        }
+
         /* Consonants & Vowels section */
         .pez-cv-section {
             display: flex;
@@ -756,7 +782,10 @@
                         <div class="pez-arrow">&#8594;</div>
                         <div class="pez-word-display" id="pez-word-display"></div>
                     </div>
-                    <button class="pez-clear-btn" onclick="pezClearWord()">CLEAR</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="pez-sound-btn" id="pez-sound-btn" onclick="pezSoundOut()">&#128266; Sound It Out</button>
+                        <button class="pez-clear-btn" onclick="pezClearWord()">CLEAR</button>
+                    </div>
                 </div>
 
                 <!-- Consonants and Vowels -->
@@ -1082,6 +1111,88 @@
             pezSpecial.forEach(t => specialRow.appendChild(makePezTile(t, 'pez-t-digraph')));
         }
 
+        const PHONETIC_MAP = {
+            // Individual consonants
+            "b": "buh", "c": "kuh", "d": "duh", "f": "fff", "g": "guh",
+            "h": "huh", "j": "juh", "k": "kuh", "l": "lll", "m": "mmm",
+            "n": "nnn", "p": "puh", "q": "kwuh", "r": "rrr", "s": "sss",
+            "t": "tuh", "v": "vvv", "w": "wuh", "x": "ks",  "y": "yuh", "z": "zzz",
+            // Individual vowels (short sound)
+            "a": "aah", "e": "ehh", "i": "ihh", "o": "aww", "u": "uhh",
+            // Digraphs
+            "ch": "chuh", "sh": "shh", "th": "thh", "wh": "wuh", "ph": "fff",
+            // R-controlled vowels
+            "ar": "arr", "er": "err", "ir": "err", "or": "orr", "ur": "err",
+            // Vowel teams
+            "ai": "ayy", "ay": "ayy", "au": "aww", "aw": "aww", "ee": "eee",
+            "ew": "yoo", "ea": "eee", "ie": "eye", "igh": "eye", "ow": "oh",
+            "oa": "oh",  "oe": "oh",  "ou": "ow",  "oo": "ooo", "oi": "oy",
+            "ue": "yoo", "ui": "ooo", "oy": "oy",  "eigh": "ayy", "ey": "eee", "ei": "ayy",
+            // Other patterns
+            "dge": "juh", "nk": "nk",  "ng": "ng",  "tch": "chuh", "qu": "kwuh",
+            "ff": "fff",  "ll": "lll", "ss": "sss", "zz": "zzz",
+            "ed": "d",    "ing": "ing",
+            // Silent/blend endings
+            "ck": "kuh", "kn": "nnn", "wr": "rrr", "gh": "", "mb": "mmm", "gn": "nnn"
+        };
+
+        function pezPhonetic(tile) {
+            const key = tile.toLowerCase();
+            if (key in PHONETIC_MAP) return PHONETIC_MAP[key];
+            // Fallback: spell it out letter by letter
+            return tile.split('').join(' ');
+        }
+
+        function pezSpeak(text, rate, pitch, volume) {
+            return new Promise(resolve => {
+                if (!text) { resolve(); return; }
+                window.speechSynthesis.cancel();
+                const utt = new SpeechSynthesisUtterance(text);
+                utt.lang   = 'en-US';
+                utt.rate   = rate;
+                utt.pitch  = pitch;
+                utt.volume = volume;
+                if (preferredVoice) utt.voice = preferredVoice;
+                utt.onend = () => resolve();
+                utt.onerror = () => resolve();
+                window.speechSynthesis.speak(utt);
+            });
+        }
+
+        function pezDelay(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        async function pezSoundOut() {
+            if (pezWord.length === 0) return;
+            const btn = document.getElementById('pez-sound-btn');
+            btn.disabled = true;
+
+            // Sound out each tile individually
+            for (let i = 0; i < pezWord.length; i++) {
+                const tile = pezWord[i];
+                const phonetic = pezPhonetic(tile);
+
+                // Highlight the current box
+                const box = document.getElementById('pez-box-' + i);
+                box.classList.add('speaking');
+
+                if (phonetic !== '') {
+                    await pezSpeak(phonetic, 0.75, 1.1, 1);
+                }
+
+                box.classList.remove('speaking');
+                await pezDelay(300);
+            }
+
+            // Pause, then read the full assembled word
+            await pezDelay(600);
+            const fullWord = pezWord.join('');
+            await pezSpeak(fullWord, 0.75, 1.1, 1);
+
+            btn.disabled = false;
+        }
+
         function pezAddTile(text) {
             if (pezWord.length >= PEZ_MAX) return;
             pezWord.push(text);
@@ -1089,8 +1200,11 @@
         }
 
         function pezClearWord() {
+            window.speechSynthesis.cancel();
             pezWord = [];
             pezUpdateDisplay();
+            const btn = document.getElementById('pez-sound-btn');
+            if (btn) btn.disabled = false;
         }
 
         function pezUpdateDisplay() {
