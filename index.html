@@ -536,12 +536,12 @@
             box-shadow: 0 6px 16px rgba(76, 110, 245, 0.18), 0 0 0 3px rgba(76, 110, 245, 0.16);
         }
 
-        .pez-box.multi-replace-anchor {
+        .pez-box.insert-anchor {
             border-color: #00897b;
             box-shadow: 0 6px 16px rgba(0, 137, 123, 0.16), 0 0 0 3px rgba(0, 137, 123, 0.14);
         }
 
-        .pez-multi-replace-toggle {
+        .pez-insert-direction {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -552,27 +552,40 @@
             border: 2px solid transparent;
         }
 
-        .pez-multi-replace-toggle.active {
+        .pez-insert-direction.active {
             border-color: #00897b;
         }
 
-        .pez-multi-replace-toggle input {
-            width: 18px;
-            height: 18px;
-            margin: 0;
-            accent-color: #00897b;
-            cursor: pointer;
+        .pez-direction-buttons {
+            display: inline-flex;
+            gap: 6px;
+            flex-wrap: wrap;
         }
 
-        .pez-multi-replace-toggle label {
+        .pez-direction-btn {
+            border: 2px solid #7bc4bb;
+            background: #fff;
+            color: #1f3d39;
+            border-radius: 999px;
+            padding: 7px 12px;
             font-family: 'Poppins', sans-serif;
             font-weight: 700;
             font-size: 0.82rem;
-            color: #1f3d39;
             cursor: pointer;
+            transition: transform 0.1s, background 0.15s, border-color 0.15s, color 0.15s;
         }
 
-        .pez-multi-replace-status {
+        .pez-direction-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .pez-direction-btn.active {
+            background: #00897b;
+            border-color: #00897b;
+            color: #fff;
+        }
+
+        .pez-insert-status {
             font-family: 'Poppins', sans-serif;
             font-size: 0.74rem;
             font-weight: 700;
@@ -841,10 +854,12 @@
                             <div class="pez-phonetic-sub" id="pez-phonetic-sub"></div>
                         </div>
                     </div>
-                    <div class="pez-multi-replace-toggle" id="pez-multi-replace-toggle-wrap">
-                        <input type="checkbox" id="pez-multi-replace-toggle" onchange="pezHandleMultiReplaceToggle(this.checked)">
-                        <label for="pez-multi-replace-toggle">Replace with Multiple Letters</label>
-                        <div class="pez-multi-replace-status" id="pez-multi-replace-status"></div>
+                    <div class="pez-insert-direction" id="pez-insert-direction-wrap">
+                        <div class="pez-direction-buttons">
+                            <button type="button" class="pez-direction-btn" id="pez-insert-left-btn" onclick="pezSetInsertDirection('left')">Add letters to the left</button>
+                            <button type="button" class="pez-direction-btn" id="pez-insert-right-btn" onclick="pezSetInsertDirection('right')">Add letters to the right</button>
+                        </div>
+                        <div class="pez-insert-status" id="pez-insert-status"></div>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <button class="pez-sound-btn" id="pez-sound-btn" onclick="pezSoundOut()">&#128266; Sound It Out</button>
@@ -1150,9 +1165,8 @@
         const PEZ_MAX = 6;
         let pezWord = [];
         let selectedWordTileIndex = null;
-        let isMultiReplaceMode = false;
-        let multiReplaceInsertIndex = null;
-        let hasStartedMultiReplace = false;
+        let insertDirection = 'right';
+        let activeInsertIndex = null;
 
         const pezVowelSet = new Set(['a', 'e', 'i', 'o', 'u']);
 
@@ -1200,42 +1214,42 @@
             return el;
         }
 
-        function pezResetMultiReplaceState({ clearSelection = false } = {}) {
-            multiReplaceInsertIndex = null;
-            hasStartedMultiReplace = false;
+        function pezResetInsertState({ clearSelection = false } = {}) {
+            activeInsertIndex = null;
             if (clearSelection) selectedWordTileIndex = null;
         }
 
-        function pezHandleMultiReplaceToggle(checked) {
-            isMultiReplaceMode = checked;
-            if (!checked) {
-                pezResetMultiReplaceState();
-            } else if (selectedWordTileIndex !== null && pezWord[selectedWordTileIndex]) {
-                multiReplaceInsertIndex = selectedWordTileIndex;
-                hasStartedMultiReplace = false;
+        function pezSyncInsertIndex() {
+            if (selectedWordTileIndex === null || !pezWord[selectedWordTileIndex]) {
+                activeInsertIndex = null;
+                return;
             }
+            activeInsertIndex = insertDirection === 'left'
+                ? selectedWordTileIndex
+                : selectedWordTileIndex + 1;
+        }
+
+        function pezSetInsertDirection(direction) {
+            if (direction !== 'left' && direction !== 'right') return;
+            insertDirection = direction;
+            pezSyncInsertIndex();
             pezUpdateDisplay();
         }
 
         function pezToggleWordTileSelection(index) {
             if (!pezWord[index]) {
                 selectedWordTileIndex = null;
-                pezResetMultiReplaceState();
+                pezResetInsertState();
                 pezUpdateDisplay();
                 return;
             }
 
             if (selectedWordTileIndex === index) {
                 selectedWordTileIndex = null;
-                pezResetMultiReplaceState();
+                pezResetInsertState();
             } else {
                 selectedWordTileIndex = index;
-                if (isMultiReplaceMode) {
-                    multiReplaceInsertIndex = index;
-                    hasStartedMultiReplace = false;
-                } else {
-                    pezResetMultiReplaceState();
-                }
+                pezSyncInsertIndex();
             }
             pezUpdateDisplay();
         }
@@ -1397,37 +1411,24 @@
         function pezDeleteSelectedTile() {
             if (selectedWordTileIndex === null || !pezWord[selectedWordTileIndex]) return;
             pezWord = pezWord.filter((_, index) => index !== selectedWordTileIndex);
-            pezResetMultiReplaceState({ clearSelection: true });
+            pezResetInsertState({ clearSelection: true });
             pezUpdateDisplay();
             markSiteUpdated();
         }
 
         function pezAddTile(text) {
             if (selectedWordTileIndex !== null) {
-                if (!isMultiReplaceMode) {
-                    pezWord = pezWord.map((tile, index) => index === selectedWordTileIndex ? text : tile);
-                    pezResetMultiReplaceState({ clearSelection: true });
-                    pezUpdateDisplay();
-                    markSiteUpdated();
-                    return;
-                }
-
-                if (!hasStartedMultiReplace) {
-                    pezWord = pezWord.map((tile, index) => index === selectedWordTileIndex ? text : tile);
-                    multiReplaceInsertIndex = selectedWordTileIndex + 1;
-                    hasStartedMultiReplace = true;
-                    pezUpdateDisplay();
-                    markSiteUpdated();
-                    return;
-                }
-
-                if (pezWord.length >= PEZ_MAX || multiReplaceInsertIndex === null) return;
+                if (pezWord.length >= PEZ_MAX || activeInsertIndex === null) return;
                 pezWord = [
-                    ...pezWord.slice(0, multiReplaceInsertIndex),
+                    ...pezWord.slice(0, activeInsertIndex),
                     text,
-                    ...pezWord.slice(multiReplaceInsertIndex)
+                    ...pezWord.slice(activeInsertIndex)
                 ];
-                multiReplaceInsertIndex += 1;
+                if (insertDirection === 'left') {
+                    selectedWordTileIndex += 1;
+                } else {
+                    activeInsertIndex += 1;
+                }
                 pezUpdateDisplay();
                 markSiteUpdated();
                 return;
@@ -1442,7 +1443,7 @@
         function pezClearWord() {
             window.speechSynthesis.cancel();
             pezWord = [];
-            pezResetMultiReplaceState({ clearSelection: true });
+            pezResetInsertState({ clearSelection: true });
             pezUpdateDisplay();
             const btn = document.getElementById('pez-sound-btn');
             if (btn) btn.disabled = false;
@@ -1457,22 +1458,25 @@
                 box.classList.toggle('filled', val !== '');
                 box.classList.toggle('selected', selectedWordTileIndex === i && val !== '');
                 box.classList.toggle(
-                    'multi-replace-anchor',
-                    isMultiReplaceMode && hasStartedMultiReplace && selectedWordTileIndex === i && val !== ''
+                    'insert-anchor',
+                    selectedWordTileIndex === i && val !== ''
                 );
             }
             document.getElementById('pez-word-display').textContent = pezWord.join('');
             // Show space-separated phonetic sounds as a subtitle
             document.getElementById('pez-phonetic-sub').textContent =
                 pezWord.map(getPhoneticLabel).join('  ');
-            const multiReplaceWrap = document.getElementById('pez-multi-replace-toggle-wrap');
-            const multiReplaceStatus = document.getElementById('pez-multi-replace-status');
-            if (multiReplaceWrap) multiReplaceWrap.classList.toggle('active', isMultiReplaceMode && selectedWordTileIndex !== null);
-            if (multiReplaceStatus) {
-                multiReplaceStatus.textContent =
-                    isMultiReplaceMode && selectedWordTileIndex !== null
-                        ? (hasStartedMultiReplace ? 'Adding letters to the right.' : 'Select board letters to build the replacement.')
-                        : '';
+            const insertWrap = document.getElementById('pez-insert-direction-wrap');
+            const insertStatus = document.getElementById('pez-insert-status');
+            const leftBtn = document.getElementById('pez-insert-left-btn');
+            const rightBtn = document.getElementById('pez-insert-right-btn');
+            if (insertWrap) insertWrap.classList.toggle('active', selectedWordTileIndex !== null);
+            if (leftBtn) leftBtn.classList.toggle('active', insertDirection === 'left');
+            if (rightBtn) rightBtn.classList.toggle('active', insertDirection === 'right');
+            if (insertStatus) {
+                insertStatus.textContent = selectedWordTileIndex !== null
+                    ? (insertDirection === 'left' ? 'New letters will grow to the left of this tile.' : 'New letters will grow to the right of this tile.')
+                    : 'Select a tile in My Word, then choose a side.';
             }
             const soundBtn = document.getElementById('pez-sound-btn');
             const readBtn = document.getElementById('pez-read-btn');
