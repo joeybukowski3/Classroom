@@ -519,13 +519,21 @@
             font-size: 0.95rem;
             background: #fff;
             color: #1a1a1a;
-            transition: border-color 0.15s, background 0.15s;
+            transition: transform 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
             cursor: default;
         }
 
         .pez-box.filled {
             border-color: #444;
             background: #fffde7;
+            cursor: pointer;
+        }
+
+        .pez-box.selected {
+            transform: translateY(-3px) scale(1.03);
+            border-color: #4c6ef5;
+            background: #fffef2;
+            box-shadow: 0 6px 16px rgba(76, 110, 245, 0.18), 0 0 0 3px rgba(76, 110, 245, 0.16);
         }
 
         .pez-arrow-row {
@@ -1081,6 +1089,7 @@
 
         const PEZ_MAX = 6;
         let pezWord = [];
+        let selectedWordTileIndex = null;
 
         const pezVowelSet = new Set(['a', 'e', 'i', 'o', 'u']);
 
@@ -1126,6 +1135,17 @@
             el.textContent = text;
             el.addEventListener('click', () => pezAddTile(text));
             return el;
+        }
+
+        function pezToggleWordTileSelection(index) {
+            if (!pezWord[index]) {
+                selectedWordTileIndex = null;
+                pezUpdateDisplay();
+                return;
+            }
+
+            selectedWordTileIndex = selectedWordTileIndex === index ? null : index;
+            pezUpdateDisplay();
         }
 
         function buildPezBoard() {
@@ -1277,6 +1297,14 @@
         }
 
         function pezAddTile(text) {
+            if (selectedWordTileIndex !== null) {
+                pezWord[selectedWordTileIndex] = text;
+                selectedWordTileIndex = null;
+                pezUpdateDisplay();
+                markSiteUpdated();
+                return;
+            }
+
             if (pezWord.length >= PEZ_MAX) return;
             pezWord.push(text);
             pezUpdateDisplay();
@@ -1286,6 +1314,7 @@
         function pezClearWord() {
             window.speechSynthesis.cancel();
             pezWord = [];
+            selectedWordTileIndex = null;
             pezUpdateDisplay();
             const btn = document.getElementById('pez-sound-btn');
             if (btn) btn.disabled = false;
@@ -1298,6 +1327,7 @@
                 const val = pezWord[i] || '';
                 box.textContent = val;
                 box.classList.toggle('filled', val !== '');
+                box.classList.toggle('selected', selectedWordTileIndex === i && val !== '');
             }
             document.getElementById('pez-word-display').textContent = pezWord.join('');
             // Show space-separated phonetic sounds as a subtitle
@@ -1319,6 +1349,11 @@
 
             updateTray(false);
             buildPezBoard();
+            for (let i = 0; i < PEZ_MAX; i++) {
+                const box = document.getElementById('pez-box-' + i);
+                if (box) box.addEventListener('click', () => pezToggleWordTileSelection(i));
+            }
+            pezUpdateDisplay();
         };
     </script>
 </body>
