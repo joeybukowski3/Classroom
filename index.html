@@ -566,7 +566,8 @@
             min-height: 1.1rem;
         }
 
-        .pez-clear-btn {
+        .pez-clear-btn,
+        .pez-delete-btn {
             align-self: flex-start;
             padding: 7px 18px;
             background: #ffadad;
@@ -579,10 +580,13 @@
             transition: transform 0.1s;
             color: #5a1a1a;
         }
-        .pez-clear-btn:hover  { transform: translateY(-1px); }
-        .pez-clear-btn:active { transform: translateY(1px); }
+        .pez-clear-btn:hover,
+        .pez-delete-btn:hover { transform: translateY(-1px); }
+        .pez-clear-btn:active,
+        .pez-delete-btn:active { transform: translateY(1px); }
 
-        .pez-sound-btn {
+        .pez-sound-btn,
+        .pez-read-btn {
             align-self: flex-start;
             padding: 7px 18px;
             background: #b3e5fc;
@@ -595,11 +599,17 @@
             transition: transform 0.1s, opacity 0.2s;
             color: #01579b;
         }
-        .pez-sound-btn:hover:not(:disabled)  { transform: translateY(-1px); }
-        .pez-sound-btn:active:not(:disabled) { transform: translateY(1px); }
-        .pez-sound-btn:disabled {
+        .pez-sound-btn:hover:not(:disabled),
+        .pez-read-btn:hover:not(:disabled)  { transform: translateY(-1px); }
+        .pez-sound-btn:active:not(:disabled),
+        .pez-read-btn:active:not(:disabled) { transform: translateY(1px); }
+        .pez-sound-btn:disabled,
+        .pez-read-btn:disabled,
+        .pez-delete-btn:disabled,
+        .pez-clear-btn:disabled {
             opacity: 0.45;
             cursor: not-allowed;
+            transform: none;
         }
 
         .pez-box.speaking {
@@ -790,6 +800,8 @@
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <button class="pez-sound-btn" id="pez-sound-btn" onclick="pezSoundOut()">&#128266; Sound It Out</button>
+                        <button class="pez-read-btn" id="pez-read-btn" onclick="pezReadWord()">Read Word</button>
+                        <button class="pez-delete-btn" id="pez-delete-btn" onclick="pezDeleteSelectedTile()">Delete Letter</button>
                         <button class="pez-clear-btn" onclick="pezClearWord()">CLEAR</button>
                     </div>
                 </div>
@@ -1296,6 +1308,20 @@
             btn.disabled = false;
         }
 
+        function pezReadWord() {
+            if (pezWord.length === 0) return;
+            window.speechSynthesis.cancel();
+            pezSpeak(pezWord.join(''), 0.95, 1, 1);
+        }
+
+        function pezDeleteSelectedTile() {
+            if (selectedWordTileIndex === null || !pezWord[selectedWordTileIndex]) return;
+            pezWord.splice(selectedWordTileIndex, 1);
+            selectedWordTileIndex = null;
+            pezUpdateDisplay();
+            markSiteUpdated();
+        }
+
         function pezAddTile(text) {
             if (selectedWordTileIndex !== null) {
                 pezWord[selectedWordTileIndex] = text;
@@ -1333,6 +1359,12 @@
             // Show space-separated phonetic sounds as a subtitle
             document.getElementById('pez-phonetic-sub').textContent =
                 pezWord.map(getPhoneticLabel).join('  ');
+            const soundBtn = document.getElementById('pez-sound-btn');
+            const readBtn = document.getElementById('pez-read-btn');
+            const deleteBtn = document.getElementById('pez-delete-btn');
+            if (soundBtn) soundBtn.disabled = pezWord.length === 0;
+            if (readBtn) readBtn.disabled = pezWord.length === 0;
+            if (deleteBtn) deleteBtn.disabled = selectedWordTileIndex === null || !pezWord[selectedWordTileIndex];
         }
 
         // =================== INIT ===================
