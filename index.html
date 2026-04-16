@@ -541,6 +541,12 @@
             box-shadow: 0 6px 16px rgba(0, 137, 123, 0.16), 0 0 0 3px rgba(0, 137, 123, 0.14);
         }
 
+        .pez-box.insert-target {
+            border-color: #00897b;
+            background: #f2fffc;
+            box-shadow: inset 0 0 0 2px rgba(0, 137, 123, 0.18);
+        }
+
         .pez-insert-direction {
             display: flex;
             align-items: center;
@@ -567,10 +573,13 @@
             background: #fff;
             color: #1f3d39;
             border-radius: 999px;
-            padding: 7px 12px;
+            min-width: 42px;
+            min-height: 42px;
+            padding: 0 12px;
             font-family: 'Poppins', sans-serif;
             font-weight: 700;
-            font-size: 0.82rem;
+            font-size: 1.2rem;
+            line-height: 1;
             cursor: pointer;
             transition: transform 0.1s, background 0.15s, border-color 0.15s, color 0.15s;
         }
@@ -583,6 +592,12 @@
             background: #00897b;
             border-color: #00897b;
             color: #fff;
+        }
+
+        .pez-direction-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .pez-insert-status {
@@ -856,8 +871,8 @@
                     </div>
                     <div class="pez-insert-direction" id="pez-insert-direction-wrap">
                         <div class="pez-direction-buttons">
-                            <button type="button" class="pez-direction-btn" id="pez-insert-left-btn" onclick="pezSetInsertDirection('left')">Add letters to the left</button>
-                            <button type="button" class="pez-direction-btn" id="pez-insert-right-btn" onclick="pezSetInsertDirection('right')">Add letters to the right</button>
+                            <button type="button" class="pez-direction-btn" id="pez-insert-left-btn" onclick="pezMoveInsertCursor(-1)" aria-label="Move insertion cursor left" title="Move insertion cursor left">&#8592;</button>
+                            <button type="button" class="pez-direction-btn" id="pez-insert-right-btn" onclick="pezMoveInsertCursor(1)" aria-label="Move insertion cursor right" title="Move insertion cursor right">&#8594;</button>
                         </div>
                         <div class="pez-insert-status" id="pez-insert-status"></div>
                     </div>
@@ -1165,8 +1180,7 @@
         const PEZ_MAX = 6;
         let pezWord = [];
         let selectedWordTileIndex = null;
-        let insertDirection = 'right';
-        let activeInsertIndex = null;
+        let activeInsertIndex = 0;
 
         const pezVowelSet = new Set(['a', 'e', 'i', 'o', 'u']);
 
@@ -1215,42 +1229,29 @@
         }
 
         function pezResetInsertState({ clearSelection = false } = {}) {
-            activeInsertIndex = null;
+            activeInsertIndex = Math.min(activeInsertIndex, pezWord.length);
             if (clearSelection) selectedWordTileIndex = null;
         }
 
-        function pezSyncInsertIndex() {
-            if (selectedWordTileIndex === null || !pezWord[selectedWordTileIndex]) {
-                activeInsertIndex = null;
-                return;
-            }
-            activeInsertIndex = insertDirection === 'left'
-                ? selectedWordTileIndex
-                : selectedWordTileIndex + 1;
-        }
-
-        function pezSetInsertDirection(direction) {
-            if (direction !== 'left' && direction !== 'right') return;
-            insertDirection = direction;
-            pezSyncInsertIndex();
+        function pezMoveInsertCursor(delta) {
+            activeInsertIndex = Math.max(0, Math.min(pezWord.length, activeInsertIndex + delta));
             pezUpdateDisplay();
         }
 
         function pezToggleWordTileSelection(index) {
             if (!pezWord[index]) {
                 selectedWordTileIndex = null;
-                pezResetInsertState();
+                activeInsertIndex = pezWord.length;
                 pezUpdateDisplay();
                 return;
             }
 
             if (selectedWordTileIndex === index) {
                 selectedWordTileIndex = null;
-                pezResetInsertState();
             } else {
                 selectedWordTileIndex = index;
-                pezSyncInsertIndex();
             }
+            activeInsertIndex = Math.min(index + 1, pezWord.length);
             pezUpdateDisplay();
         }
 
@@ -1411,31 +1412,23 @@
         function pezDeleteSelectedTile() {
             if (selectedWordTileIndex === null || !pezWord[selectedWordTileIndex]) return;
             pezWord = pezWord.filter((_, index) => index !== selectedWordTileIndex);
+            activeInsertIndex = Math.min(selectedWordTileIndex, pezWord.length);
             pezResetInsertState({ clearSelection: true });
             pezUpdateDisplay();
             markSiteUpdated();
         }
 
         function pezAddTile(text) {
-            if (selectedWordTileIndex !== null) {
-                if (pezWord.length >= PEZ_MAX || activeInsertIndex === null) return;
-                pezWord = [
-                    ...pezWord.slice(0, activeInsertIndex),
-                    text,
-                    ...pezWord.slice(activeInsertIndex)
-                ];
-                if (insertDirection === 'left') {
-                    selectedWordTileIndex += 1;
-                } else {
-                    activeInsertIndex += 1;
-                }
-                pezUpdateDisplay();
-                markSiteUpdated();
-                return;
-            }
-
             if (pezWord.length >= PEZ_MAX) return;
-            pezWord = [...pezWord, text];
+            pezWord = [
+                ...pezWord.slice(0, activeInsertIndex),
+                text,
+                ...pezWord.slice(activeInsertIndex)
+            ];
+            if (selectedWordTileIndex !== null && activeInsertIndex <= selectedWordTileIndex) {
+                selectedWordTileIndex += 1;
+            }
+            activeInsertIndex = Math.min(activeInsertIndex + 1, pezWord.length);
             pezUpdateDisplay();
             markSiteUpdated();
         }
@@ -1443,6 +1436,7 @@
         function pezClearWord() {
             window.speechSynthesis.cancel();
             pezWord = [];
+            activeInsertIndex = 0;
             pezResetInsertState({ clearSelection: true });
             pezUpdateDisplay();
             const btn = document.getElementById('pez-sound-btn');
@@ -1461,6 +1455,10 @@
                     'insert-anchor',
                     selectedWordTileIndex === i && val !== ''
                 );
+                box.classList.toggle(
+                    'insert-target',
+                    i === Math.min(activeInsertIndex, PEZ_MAX - 1) && (i === activeInsertIndex || (activeInsertIndex === pezWord.length && val === ''))
+                );
             }
             document.getElementById('pez-word-display').textContent = pezWord.join('');
             // Show space-separated phonetic sounds as a subtitle
@@ -1470,13 +1468,21 @@
             const insertStatus = document.getElementById('pez-insert-status');
             const leftBtn = document.getElementById('pez-insert-left-btn');
             const rightBtn = document.getElementById('pez-insert-right-btn');
-            if (insertWrap) insertWrap.classList.toggle('active', selectedWordTileIndex !== null);
-            if (leftBtn) leftBtn.classList.toggle('active', insertDirection === 'left');
-            if (rightBtn) rightBtn.classList.toggle('active', insertDirection === 'right');
+            if (insertWrap) insertWrap.classList.add('active');
+            if (leftBtn) {
+                leftBtn.classList.toggle('active', activeInsertIndex > 0);
+                leftBtn.disabled = activeInsertIndex <= 0;
+            }
+            if (rightBtn) {
+                rightBtn.classList.toggle('active', activeInsertIndex < pezWord.length);
+                rightBtn.disabled = activeInsertIndex >= pezWord.length;
+            }
             if (insertStatus) {
-                insertStatus.textContent = selectedWordTileIndex !== null
-                    ? (insertDirection === 'left' ? 'New letters will grow to the left of this tile.' : 'New letters will grow to the right of this tile.')
-                    : 'Select a tile in My Word, then choose a side.';
+                insertStatus.textContent = pezWord.length === 0
+                    ? 'Use the arrows to set where the next letter or sound goes.'
+                    : pezWord.length >= PEZ_MAX
+                        ? 'The word is full. Delete a tile or move the cursor left to insert.'
+                        : 'The next letter or sound will go in box ' + (activeInsertIndex + 1) + '.';
             }
             const soundBtn = document.getElementById('pez-sound-btn');
             const readBtn = document.getElementById('pez-read-btn');
